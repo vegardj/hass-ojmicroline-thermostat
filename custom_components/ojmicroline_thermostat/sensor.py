@@ -74,7 +74,15 @@ def _get_value(
     with the description's key.
     """
     if value_getter:
-        return value_getter(thermostat)
+        try:
+            return value_getter(thermostat)
+        except (IndexError, KeyError, ValueError, TypeError):
+            # Some thermostat models/states have no data for a given getter
+            # (e.g. an empty energy history makes get_current_energy() raise
+            # IndexError in the ojmicroline-thermostat library). Treat that as
+            # "no value" so the sensor is skipped instead of crashing the whole
+            # sensor platform setup for every thermostat.
+            return None
     return getattr(thermostat, desc.key)
 
 
